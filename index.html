@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kalkulator Right Issue (HMETD) IDX</title>
+<meta name="theme-color" content="#f9f7f6">
+<style>
+  :root {
+    --bg: oklch(0.975 0.004 30);
+    --surface: oklch(0.995 0.002 30);
+    --control: oklch(0.99 0.003 30);
+    --ink: oklch(0.24 0.02 25);
+    --ink-soft: oklch(0.42 0.02 25);
+    --line: oklch(0.86 0.01 30);
+    --line-strong: oklch(0.74 0.025 30);
+    --accent: oklch(0.42 0.14 20);        /* merah-hati */
+    --accent-ink: oklch(0.32 0.12 20);
+    --gold: oklch(0.68 0.1 85);
+    --gain: oklch(0.45 0.11 155);
+    --loss: oklch(0.48 0.18 25);
+    --warn-bg: oklch(0.93 0.04 80);
+    --warn-ink: oklch(0.35 0.08 60);
+    --danger-bg: oklch(0.94 0.03 20);
+    --serif: Georgia, 'Times New Roman', serif;
+    --sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --mono: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.5;
+    padding: 0 16px 40px;
+    max-width: 820px;
+    margin: 0 auto;
+  }
+  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+  header {
+    padding: 28px 0 16px;
+    border-bottom: 3px double var(--gold);
+    margin-bottom: 20px;
+  }
+  h1 {
+    font-family: var(--serif);
+    font-size: 2.05rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--accent-ink);
+    text-wrap: balance;
+  }
+  header p { color: var(--ink-soft); font-size: 0.88rem; margin-top: 4px; }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .preset-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+  .preset-row label { font-size: 0.8rem; font-weight: 600; color: var(--ink-soft); }
+  select, input[type="number"] {
+    font: inherit;
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    background: var(--control);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 12px;
+    width: 100%;
+    min-height: 44px;
+  }
+  input:focus-visible, select:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+    border-color: var(--accent);
+  }
+  select:hover, input[type="number"]:hover { border-color: var(--line-strong); }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] { appearance: textfield; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .field { min-width: 0; }
+  fieldset.field { border: 0; padding: 0; }
+  .field label, .field legend {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+    margin-bottom: 5px;
+  }
+  .field legend { padding: 0; }
+  .field small { display: block; font-size: 0.72rem; color: var(--ink-soft); margin-top: 4px; }
+  .field-rasio legend { text-align: center; width: 100%; }
+  .ratio-pair { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; }
+  .ratio-pair input { text-align: center; }
+  .ratio-pair span { color: var(--ink-soft); font-weight: 700; }
+
+  #banner {
+    display: none;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border: 1px solid var(--line);
+  }
+  #banner.warn { display: block; background: var(--warn-bg); color: var(--warn-ink); }
+  #banner.danger { display: block; background: var(--danger-bg); color: var(--loss); }
+
+  .figures {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .fig {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .fig .label { font-size: 0.76rem; font-weight: 600; color: var(--ink-soft); }
+  .fig .value {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 1.45rem;
+    font-weight: 700;
+    margin-top: 2px;
+  }
+  .fig .sub { font-size: 0.74rem; color: var(--ink-soft); margin-top: 2px; }
+  .fig.ht { border-color: var(--accent); background: var(--surface); }
+  .fig.ht .value { color: var(--accent-ink); }
+
+  h2 {
+    font-family: var(--serif);
+    font-size: 1.15rem;
+    margin: 24px 0 10px;
+    color: var(--accent-ink);
+  }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; min-width: 480px; font-size: 0.86rem; }
+  th, td { padding: 9px 12px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th:first-child, td:first-child {
+    text-align: left;
+    font-weight: 600;
+    color: var(--ink-soft);
+    position: sticky; left: 0;
+    background: var(--surface);
+  }
+  thead th {
+    font-family: var(--serif);
+    font-size: 0.95rem;
+    color: var(--ink);
+    border-bottom: 2px solid var(--gold);
+  }
+  td { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  tr:last-child td { border-bottom: none; font-weight: 700; }
+  .pos { color: var(--gain); }
+  .neg { color: var(--loss); }
+
+  .note { font-size: 0.78rem; color: var(--ink-soft); margin-top: 10px; }
+
+  .empty {
+    text-align: center;
+    color: var(--ink-soft);
+    padding: 32px 16px;
+    font-size: 0.9rem;
+  }
+
+  footer {
+    margin-top: 36px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+  }
+  #selfcheck { font-weight: 600; }
+  #selfcheck.ok { color: var(--gain); }
+  #selfcheck.fail { color: var(--loss); }
+  footer a { color: var(--accent-ink); text-decoration: none; border-bottom: 1px solid var(--gold); }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+  }
+  .tabs button {
+    font: inherit;
+    font-weight: 600;
+    font-size: 0.92rem;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    padding: 12px 14px;
+    min-height: 44px;
+    color: var(--ink-soft);
+    cursor: pointer;
+  }
+  .tabs button:hover { color: var(--ink); background: oklch(0.96 0.006 30); }
+  .tabs button[aria-selected="true"] {
+    color: var(--accent-ink);
+    border-bottom-color: var(--accent);
+  }
+  .tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+  .belajar h2 { margin-top: 26px; }
+  .belajar h2:first-child { margin-top: 4px; }
+  .belajar p, .belajar li, .belajar dd { max-width: 68ch; font-size: 0.92rem; }
+  .belajar p { margin-bottom: 10px; }
+
+  ol.timeline { list-style: none; padding: 0; counter-reset: tahap; }
+  ol.timeline li {
+    counter-increment: tahap;
+    display: grid;
+    grid-template-columns: 34px 1fr;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  ol.timeline li:last-child { border-bottom: none; }
+  ol.timeline li::before {
+    content: counter(tahap);
+    font-family: var(--serif);
+    font-weight: 700;
+    color: oklch(0.55 0.1 85);   /* gold digelapin: >=3:1 di atas bg */
+    font-size: 1.3rem;
+    line-height: 1.2;
+    text-align: center;
+  }
+  ol.timeline strong { display: block; color: var(--accent-ink); }
+
+  dl.kamus { margin: 0; }
+  dl.kamus dt {
+    font-weight: 700;
+    color: var(--accent-ink);
+    margin-top: 12px;
+  }
+  dl.kamus dd { margin: 2px 0 0; color: var(--ink); }
+
+  .opsi { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); margin-top: 10px; padding: 12px 14px; }
+  .opsi strong:first-child { color: var(--accent-ink); }
+  .belajar .angka { font-family: var(--mono); font-variant-numeric: tabular-nums; font-weight: 700; }
+
+  .cta {
+    font: inherit;
+    font-weight: 600;
+    background: var(--accent);
+    color: oklch(0.98 0.005 30);
+    border: none;
+    border-radius: 8px;
+    padding: 12px 18px;
+    min-height: 44px;
+    margin-top: 14px;
+    cursor: pointer;
+  }
+  .cta:hover { background: var(--accent-ink); }
+  .cta:active { transform: translateY(1px); }
+  .cta:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 2px; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .fig .value, td { transition: color 180ms ease-out; }
+    .tabs button { transition: color 160ms ease-out, border-color 160ms ease-out, background-color 160ms ease-out; }
+    .cta { transition: background-color 160ms ease-out, transform 120ms ease-out; }
+  }
+
+  @media (max-width: 680px) {
+    body { padding: 0 14px 32px; }
+    header { padding-top: 24px; }
+    h1 { font-size: 1.7rem; }
+    .grid { grid-template-columns: 1fr; }
+    .field-rasio legend { text-align: left; }
+    .figures { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  @media (max-width: 390px) {
+    .figures { grid-template-columns: 1fr; }
+    .tabs button { flex: 1; padding-inline: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Kalkulator Right Issue</h1>
+  <p>Harga teoritis ex-right, nilai HMETD, dilusi, dan skenario pemegang saham. Formula resmi BEI, terverifikasi 5 kasus nyata.</p>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Bagian">
+  <button id="tabbtn-kalk" role="tab" aria-selected="true" aria-controls="tab-kalkulator">Kalkulator</button>
+  <button id="tabbtn-belajar" role="tab" aria-selected="false" aria-controls="tab-belajar">Buat Pemula</button>
+</nav>
+
+<div id="tab-kalkulator" role="tabpanel" aria-labelledby="tabbtn-kalk">
+
+<section class="panel">
+  <div class="preset-row">
+    <label for="preset">Muat contoh kasus</label>
+    <select id="preset">
+      <option value="">Isi manual</option>
+      <option value="bbri">BBRI 2021 - 100:23, HT 3.810</option>
+      <option value="bris">BRIS 2022 - 90.000:10.941, HT 1.265</option>
+      <option value="bbtn">BBTN 2022 - 100jt:32,5jt, HT 1.355</option>
+      <option value="pani">PANI 2025 - 50.831:3.646, HT 13.850</option>
+      <option value="idx">Contoh IDX - 3:2, HT 1.150</option>
+    </select>
+  </div>
+  <div class="grid">
+    <div class="field">
+      <label for="hc">Harga cum date (Rp)</label>
+      <input id="hc" type="number" inputmode="decimal" min="1" placeholder="3910">
+    </div>
+    <fieldset class="field field-rasio">
+      <legend>Rasio lama : baru</legend>
+      <div class="ratio-pair">
+        <input id="ra" type="number" inputmode="numeric" min="1" placeholder="100" aria-label="Rasio saham lama">
+        <span>:</span>
+        <input id="rb" type="number" inputmode="numeric" min="1" placeholder="23" aria-label="Rasio saham baru">
+      </div>
+    </fieldset>
+    <div class="field">
+      <label for="hr">Harga pelaksanaan (Rp)</label>
+      <input id="hr" type="number" inputmode="decimal" min="1" placeholder="3400">
+    </div>
+    <div class="field">
+      <label for="lot">Saham dipegang (lot)</label>
+      <input id="lot" type="number" inputmode="numeric" min="0" value="10">
+      <small id="lembar-info">= 1.000 lembar</small>
+    </div>
+  </div>
+</section>
+
+<div id="banner" role="alert"></div>
+
+<div id="hasil" aria-live="polite" hidden>
+  <section class="figures">
+    <div class="fig ht">
+      <div class="label">Harga teoritis ex-right</div>
+      <div class="value num" id="f-ht"></div>
+      <div class="sub" id="f-ht-sub"></div>
+    </div>
+    <div class="fig">
+      <div class="label">Nilai 1 HMETD</div>
+      <div class="value num" id="f-hmetd"></div>
+      <div class="sub">teoritis, HT dikurangi harga pelaksanaan</div>
+    </div>
+    <div class="fig">
+      <div class="label">Dilusi bila tidak menebus</div>
+      <div class="value num" id="f-dilusi"></div>
+      <div class="sub" id="f-dilusi-sub"></div>
+    </div>
+    <div class="fig">
+      <div class="label">HMETD diterima</div>
+      <div class="value num" id="f-rights"></div>
+      <div class="sub" id="f-rights-sub"></div>
+    </div>
+  </section>
+
+  <h2>Tiga skenario di ex date</h2>
+  <div class="table-wrap">
+    <table id="tabel-skenario">
+      <thead>
+        <tr><th>&nbsp;</th><th>Tebus</th><th>Jual HMETD</th><th>Diamkan</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <p class="note">*Harga rata-rata skenario Tebus memakai harga cum sebagai proxy modal lama, bukan cost basis riil. P&amp;L teoritis skenario Tebus dan Jual identik (no-arbitrage); selisih kecil dari nol berasal dari pembulatan fraksi harga dan pembulatan alokasi HMETD, bukan untung atau rugi nyata. Diamkan selalu rugi sebesar nilai hak yang hangus. Harga pasar HMETD riil bisa menyimpang dari nilai teoritis.</p>
+</div>
+
+<div id="kosong" class="empty">Isi harga cum, rasio, dan harga pelaksanaan untuk mulai menghitung, atau muat contoh kasus di atas.</div>
+
+</div><!-- /tab-kalkulator -->
+
+<div id="tab-belajar" class="belajar" role="tabpanel" aria-labelledby="tabbtn-belajar" hidden>
+
+  <h2>Right issue itu apa</h2>
+  <p>Right issue itu cara perusahaan cari modal baru dengan nawarin saham tambahan ke pemegang saham lama duluan, sebelum ditawarin ke orang luar. Hak beli duluan ini namanya HMETD: Hak Memesan Efek Terlebih Dahulu.</p>
+  <p>Analoginya: kamu pemilik toko bareng beberapa partner, tokonya butuh modal segar. Partner lama ditawarin nambah setoran dulu sebelum orang luar diajak masuk, biar porsi kepemilikan kamu gak kepotong tiba-tiba.</p>
+  <p>Kalau kamu pegang sahamnya pas cum date, kamu otomatis dapet jatah HMETD sesuai rasio. Yang penting: ini <strong>hak, bukan kewajiban</strong>. Mau ditebus, dijual, atau didiemin, terserah kamu. Tapi didiemin ada konsekuensinya, dibahas di bawah.</p>
+
+  <h2>Urutan waktunya</h2>
+  <ol class="timeline">
+    <li><div><strong>Cum date</strong>Hari bursa terakhir kamu masih kebagian hak kalau pegang sahamnya. Ini deadline kamu. (BBRI 2021: 7 September)</div></li>
+    <li><div><strong>Ex date</strong>Sehari setelahnya, hak udah lepas dari saham. Harga saham disesuaikan turun ke harga teoritis, karena nilai hak yang tadinya nempel sekarang jadi instrumen terpisah. (BBRI: 8 September)</div></li>
+    <li><div><strong>Recording date</strong>Tanggal resmi pencatatan siapa aja yang berhak dapet HMETD.</div></li>
+    <li><div><strong>Periode perdagangan HMETD</strong>5 sampai 10 hari kerja. Jendela waktu kamu buat nebus HMETD atau jual di pasar, layaknya saham biasa.</div></li>
+    <li><div><strong>Hangus</strong>Lewat periode itu gak diapa-apain? Nilai HMETD kamu jadi nol.</div></li>
+  </ol>
+
+  <h2>Kamus istilah</h2>
+  <dl class="kamus">
+    <dt>HMETD</dt>
+    <dd>Hak buat beli saham baru di harga tertentu, jumlahnya sesuai rasio jatah kamu. Bisa ditebus, dijual, atau dibiarin hangus.</dd>
+    <dt>Cum date</dt>
+    <dd>Hari terakhir status saham masih membawa hak right issue.</dd>
+    <dt>Ex date</dt>
+    <dd>Hari berikutnya, hak udah lepas dan harga saham disesuaikan turun.</dd>
+    <dt>Harga pelaksanaan (exercise)</dt>
+    <dd>Harga tetap yang kamu bayar buat nebus 1 saham baru pakai 1 HMETD.</dd>
+    <dt>Harga teoritis (TERP)</dt>
+    <dd>Perkiraan harga wajar saham setelah ex date, dihitung dari rata-rata tertimbang harga cum dan harga pelaksanaan sesuai rasio.</dd>
+    <dt>Rasio</dt>
+    <dd>Perbandingan saham lama banding saham baru. Contoh 100 : 23 artinya tiap 100 saham lama dapet hak beli 23 saham baru.</dd>
+    <dt>Dilusi</dt>
+    <dd>Menyusutnya persentase kepemilikan kamu kalau gak ikut nebus, karena jumlah saham beredar nambah.</dd>
+  </dl>
+
+  <h2>Contoh nyata: BBRI 2021</h2>
+  <p>Bayangin kamu punya 10 lot BBRI (1.000 lembar) di harga <span class="angka">Rp3.910</span> pas cum date. Rasionya 100 : 23, harga pelaksanaan <span class="angka">Rp3.400</span>, harga teoritis jadi <span class="angka">Rp3.810</span>. Jatah kamu: 1.000 × 23/100 = <span class="angka">230 HMETD</span>.</p>
+  <div class="opsi"><strong>Tebus.</strong> Setor 230 × Rp3.400 = <span class="angka">Rp782.000</span>, saham kamu jadi 1.230 lembar dengan harga rata-rata lebih rendah.</div>
+  <div class="opsi"><strong>Jual HMETD.</strong> Harga pasar 1 HMETD kira-kira selisih harga teoritis dan harga pelaksanaan: Rp3.810 - Rp3.400 = <span class="angka">Rp410</span>. Jual semua dapet 230 × Rp410 = <span class="angka">Rp94.300</span> tunai, saham tetap 1.000 lembar.</div>
+  <div class="opsi"><strong>Diamkan.</strong> HMETD hangus. Saham tetap 1.000 lembar tapi nilainya turun jadi 1.000 × Rp3.810 = <span class="angka">Rp3.810.000</span>, padahal sebelum ex date Rp3.910.000. <span class="angka">Rugi Rp100.000</span>, persis nilai hak yang hangus sia-sia.</div>
+  <button class="cta" id="coba-bbri" type="button">Coba angka BBRI di kalkulator</button>
+
+  <h2>Tiga pilihan, satu aturan main</h2>
+  <ul>
+    <li><strong>Diamkan</strong> itu satu-satunya pilihan yang pasti rugi (selama harga pelaksanaan di bawah harga pasar, dan praktis selalu begitu). Hak yang hangus itu nilai riil yang lepas dari kantong, bukan cuma di atas kertas.</li>
+    <li><strong>Tebus</strong> cuma kalau kamu percaya prospek perusahaannya dan ada dana nganggur buat setoran tambahan.</li>
+    <li>Kalau dua syarat itu gak kepenuhi, <strong>jual HMETD-nya</strong> selama periode perdagangan biar nilainya gak hangus percuma.</li>
+  </ul>
+
+</div><!-- /tab-belajar -->
+
+<footer>
+  <span id="selfcheck">Self-check berjalan…</span>
+  <span>Alat edukasi investor ritel IDX</span>
+</footer>
+
+<script>
+'use strict';
+
+/* ==== Inti hitungan (terverifikasi vs 5 kasus resmi BEI, lihat riset-mekanisme.md) ==== */
+/* v1.0: formula frozen against documented IDX cases. */
+
+function tick(price) {                      // fraksi BEI 2016, batas bawah inklusif
+  if (price < 200) return 1;
+  if (price < 500) return 2;
+  if (price < 2000) return 5;
+  if (price < 5000) return 10;
+  return 25;
+}
+
+function roundTick(raw) {                   // half-up, grid ditentukan dari nilai mentah
+  const t = tick(raw);
+  return Math.floor(raw / t + 0.5) * t;
+}
+
+function allocRights(s, a, b) {             // floor(s*b/a) eksak, tanpa float dust
+  const n = s * b;
+  if (!Number.isSafeInteger(n)) return Number(BigInt(s) * BigInt(b) / BigInt(a));
+  return (n - (n % a)) / a;
+}
+
+function rightIssue(a, b, hc, hr, s) {
+  const raw = (a * hc + b * hr) / (a + b);
+  const HT = roundTick(raw);
+  const r = allocRights(s, a, b);
+  const hmetd = Math.max(0, HT - hr);       // harga teoritis 1 HMETD, clamp 0
+  const worthless = (HT - hr) <= 0;
+  const dilusi = b / (a + b);
+
+  const modal = r * hr;
+  const nilaiTebus = (s + r) * HT;
+  const avgProxy = s + r > 0 ? (s * hc + r * hr) / (s + r) : 0;
+  const pnlTebus = nilaiTebus - (s * hc + r * hr);
+
+  const proceeds = r * hmetd;               // per-HMETD: (HT - hr), BUKAN (hc - HT)
+  const nilaiJual = s * HT + proceeds;
+  const pnlJual = nilaiJual - s * hc;
+
+  const nilaiDiam = s * HT;
+  const pnlDiam = s * (HT - hc);
+
+  return { raw, HT, fraksi: tick(raw), r, hmetd, worthless, dilusi,
+    tebus: { modal, nilai: nilaiTebus, avgProxy, pnl: pnlTebus },
+    jual: { proceeds, nilai: nilaiJual, pnl: pnlJual },
+    diam: { nilai: nilaiDiam, pnl: pnlDiam } };
+}
+
+/* ==== Self-check: kasus nyata, HT wajib match harga resmi BEI ==== */
+
+const KASUS = {
+  bbri: { a: 100, b: 23, hc: 3910, hr: 3400, ht: 3810 },   // rasio penuh 1.000.000.000 : 230.128.553 diuji terpisah di selfCheck
+  bris: { a: 90000, b: 10941, hc: 1295, hr: 1000, ht: 1265 },
+  bbtn: { a: 100000000, b: 32525443, hc: 1405, hr: 1200, ht: 1355 },
+  idx:  { a: 3, b: 2, hc: 1250, hr: 1000, ht: 1150 },
+  pani: { a: 50831, b: 3646, hc: 13900, hr: 12975, ht: 13850 }
+};
+
+function selfCheck() {
+  const fails = [];
+  for (const [nama, k] of Object.entries(KASUS)) {
+    const res = rightIssue(k.a, k.b, k.hc, k.hr, 1000);
+    if (res.HT !== k.ht) fails.push(nama + ': HT ' + res.HT + ' != resmi ' + k.ht);
+    if (Math.abs(res.jual.pnl - res.tebus.pnl) > 1e-6)
+      fails.push(nama + ': P&L jual != tebus (no-arbitrage rusak)');
+  }
+  if (allocRights(1000, 100, 23) !== 230) fails.push('allocRights BBRI: harus 230');
+  if (rightIssue(1000000000, 230128553, 3910, 3400, 1000).HT !== 3810) fails.push('BBRI rasio penuh: HT harus 3810');
+  if (Math.abs(rightIssue(3, 4, 100, 50, 0).dilusi - 4 / 7) > 1e-12) fails.push('dilusi INET 3:4 harus 4/7');
+  return fails;
+}
+
+/* ==== UI ==== */
+
+const $ = id => document.getElementById(id);
+const rp = n => 'Rp' + Math.round(n).toLocaleString('id-ID');
+const rpSigned = n => (n > 0 ? '+' : n < 0 ? '−' : '') + 'Rp' + Math.abs(Math.round(n)).toLocaleString('id-ID');
+
+function baca() {
+  return {
+    hc: parseFloat($('hc').value),
+    a: parseFloat($('ra').value),
+    b: parseFloat($('rb').value),
+    hr: parseFloat($('hr').value),
+    lot: parseFloat($('lot').value)
+  };
+}
+
+function render() {
+  const v = baca();
+  const banner = $('banner');
+  banner.className = ''; banner.textContent = '';
+  $('lembar-info').textContent = '= ' + ((v.lot || 0) * 100).toLocaleString('id-ID') + ' lembar';
+
+  const lengkap = [v.hc, v.a, v.b, v.hr].every(x => Number.isFinite(x) && x > 0);
+  $('hasil').hidden = !lengkap;
+  $('kosong').hidden = lengkap;
+  if (!lengkap) return;
+
+  const s = Number.isFinite(v.lot) && v.lot >= 0 ? Math.round(v.lot) * 100 : 0;
+  const res = rightIssue(v.a, v.b, v.hc, v.hr, s);
+
+  if (res.worthless) {
+    banner.className = 'danger';
+    banner.textContent = 'HMETD tak bernilai: harga pelaksanaan di atas atau sama dengan harga teoritis. Menebus berarti membayar lebih mahal dari nilai sahamnya. Jangan tebus.';
+  } else if (v.hr >= v.hc) {
+    banner.className = 'warn';
+    banner.textContent = 'Harga pelaksanaan di atas harga cum. Periksa ulang angka; kondisi ini jarang terjadi.';
+  }
+
+  $('f-ht').textContent = rp(res.HT);
+  $('f-ht-sub').textContent = 'mentah ' + res.raw.toLocaleString('id-ID', { maximumFractionDigits: 2 }) + ', fraksi Rp' + res.fraksi;
+  $('f-hmetd').textContent = rp(res.hmetd);
+  $('f-dilusi').textContent = (res.dilusi * 100).toLocaleString('id-ID', { maximumFractionDigits: 2 }) + '%';
+  $('f-dilusi-sub').textContent = 'rasio ' + v.a.toLocaleString('id-ID') + ' : ' + v.b.toLocaleString('id-ID');
+  $('f-rights').textContent = res.r.toLocaleString('id-ID');
+  $('f-rights-sub').textContent = 'dari ' + s.toLocaleString('id-ID') + ' lembar, pecahan hangus';
+
+  const pnlCls = n => n > 0 ? 'pos' : n < 0 ? 'neg' : '';
+  const rows = [
+    ['Modal tambahan', rp(res.tebus.modal), '–', '–'],
+    ['Hasil jual HMETD', '–', rp(res.jual.proceeds), '–'],
+    ['Saham akhir (lembar)', (s + res.r).toLocaleString('id-ID'), s.toLocaleString('id-ID'), s.toLocaleString('id-ID')],
+    ['Harga rata-rata*', rp(res.tebus.avgProxy), rp(v.hc), rp(v.hc)],
+    ['Nilai posisi + kas', rp(res.tebus.nilai), rp(res.jual.nilai), rp(res.diam.nilai)],
+    ['P&L vs sebelum RI',
+      '<span class="' + pnlCls(res.tebus.pnl) + '">' + rpSigned(res.tebus.pnl) + '</span>',
+      '<span class="' + pnlCls(res.jual.pnl) + '">' + rpSigned(res.jual.pnl) + '</span>',
+      '<span class="' + pnlCls(res.diam.pnl) + '">' + rpSigned(res.diam.pnl) + '</span>']
+  ];
+  $('tabel-skenario').querySelector('tbody').innerHTML =
+    rows.map(r => '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td><td>' + r[3] + '</td></tr>').join('');
+}
+
+/* Tab switching */
+function switchTab(nama) {
+  const kalk = nama === 'kalk';
+  $('tab-kalkulator').hidden = !kalk;
+  $('tab-belajar').hidden = kalk;
+  $('tabbtn-kalk').setAttribute('aria-selected', kalk);
+  $('tabbtn-belajar').setAttribute('aria-selected', !kalk);
+}
+$('tabbtn-kalk').addEventListener('click', () => switchTab('kalk'));
+$('tabbtn-belajar').addEventListener('click', () => switchTab('belajar'));
+$('coba-bbri').addEventListener('click', () => {
+  switchTab('kalk');
+  const p = $('preset');
+  p.value = 'bbri';
+  p.dispatchEvent(new Event('change'));
+  window.scrollTo({ top: 0 });
+});
+
+$('preset').addEventListener('change', e => {
+  const k = KASUS[e.target.value];
+  if (!k) return;
+  $('hc').value = k.hc; $('ra').value = k.a; $('rb').value = k.b; $('hr').value = k.hr;
+  render();
+});
+['hc', 'ra', 'rb', 'hr', 'lot'].forEach(id => $(id).addEventListener('input', render));
+
+const fails = selfCheck();
+const badge = $('selfcheck');
+if (fails.length === 0) {
+  badge.textContent = '✓ Self-check: 5/5 kasus BEI match';
+  badge.className = 'ok';
+} else {
+  badge.textContent = '✗ Self-check GAGAL: ' + fails.length + ' error (lihat console)';
+  badge.className = 'fail';
+  console.error('Self-check gagal:', fails);
+}
+render();
+</script>
+</body>
+</html>
